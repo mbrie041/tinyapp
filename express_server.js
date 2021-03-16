@@ -1,3 +1,5 @@
+//Global Vars
+
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -7,15 +9,18 @@ app.use(bodyParser.urlencoded({extended: true})); //body-parser library to read 
 
 app.set("view engine", "ejs") //reads EJS
 
-function generateRandomString() {
-  let randomShortUrl = 6;
-  return Math.random().toString(20).substr(2, randomShortUrl);  // function that returns a string of 6 random alphanumeric characters
-}
-
-const urlDatabase = {
+const urlDatabase = { //website data hard coded in
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+//helper functions
+
+function generateRandomString() {
+  let randomShortUrl = 6;
+  return Math.random().toString(20).substr(2, randomShortUrl);  // function that returns a string of 6 random alphanumeric characters
+};
+
 
 const httpChecker = (url) => {
   let givenLink = url.body.longURL; //take the url actual url given
@@ -26,6 +31,8 @@ const httpChecker = (url) => {
     return givenLink; //return the link if it is.
   }
 };
+
+//website functions
 
 app.post("/urls", (req, res) => {
   // const longUrl = req.body.longURL
@@ -48,7 +55,7 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => { //displays short urls
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
   res.render("urls_show", templateVars); //rendering info about a single url in URL Show
 });
 
@@ -57,6 +64,11 @@ app.get("/urls", (req, res) => { //message at /urls
   res.render("urls_index", urlObject); //displayed as a table in index
 });
 
+app.post("/urls/:shortURL/delete", (req,res) => { //request to remove url
+  delete urlDatabase[req.params.shortURL];
+  res.redirect("/urls");
+  // return;
+});
 
 // app.get("/", (req, res) => { //message at root - provided (probably won't keep)
 //   res.send("Hello!");
