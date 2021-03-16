@@ -38,11 +38,6 @@ app.get("/urls/:shortURL", (req, res) => { //displays short urls
   res.render("urls_show", templateVars); //rendering info about a single url in URL Show
 });
 
-app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
-  res.render("urls_index", templateVars); //adds the new url to the database
-}); 
-
 app.get("/urls", (req, res) => { //message at /urls
   const urlObject = { urls: urlDatabase };
   res.render("urls_index", urlObject); //displayed as a table in index
