@@ -32,6 +32,10 @@ const httpChecker = (url) => {
   }
 };
 
+const updateURL = (givenShortUrl, givenLongUrl) => {
+  urlDatabase[givenShortUrl] = givenLongUrl;// update the content of the url
+};
+
 //website functions
 
 app.post("/urls", (req, res) => {
@@ -67,8 +71,20 @@ app.get("/urls", (req, res) => { //message at /urls
 app.post("/urls/:shortURL/delete", (req,res) => { //request to remove url
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
-  // return;
 });
+
+app.post('/urls/:shortURL/edit', (req, res) => { //change url to given url
+
+  const givenShortUrl= req.params.shortURL;
+  const givenLongUrl = req.body.shortURL;
+  console.log("Longurl>>",givenLongUrl)
+  console.log("Shorturl>>",givenShortUrl)
+
+  updateURL(givenShortUrl, givenLongUrl);
+
+  res.redirect(`/urls/${givenShortUrl}`); //redirects to the new url page upon completion
+});
+
 
 // app.get("/", (req, res) => { //message at root - provided (probably won't keep)
 //   res.send("Hello!");
