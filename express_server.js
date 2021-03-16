@@ -17,13 +17,20 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-app.get("/urls", (req, res) => { //message at /urls
-  const urlObject = { urls: urlDatabase };
-  res.render("urls_index", urlObject); //displayed as a table in index
+app.post("/urls", (req, res) => {
+  // const longUrl = req.body.longURL
+  const newShortUrl = generateRandomString();   /// runs our function which will become the shortUrl
+  urlDatabase[newShortUrl] = req.body.longURL;
+  res.redirect(`/urls/${newShortUrl}`);         // Replaced ok with redirection to URL
 });
 
 app.get("/urls/new", (req, res) => {
   res.render("urls_new"); //get route to render the urls_new.ejs
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL]
+  res.redirect(longURL); //requests to the endpoint "/u/:shortURL" will redirect to its longURL
 });
 
 app.get("/urls/:shortURL", (req, res) => { //displays short urls
@@ -31,9 +38,14 @@ app.get("/urls/:shortURL", (req, res) => { //displays short urls
   res.render("urls_show", templateVars); //rendering info about a single url in URL Show
 });
 
-app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+app.get("/urls", (req, res) => {
+  const templateVars = { urls: urlDatabase };
+  res.render("urls_index", templateVars); //adds the new url to the database
+}); 
+
+app.get("/urls", (req, res) => { //message at /urls
+  const urlObject = { urls: urlDatabase };
+  res.render("urls_index", urlObject); //displayed as a table in index
 });
 
 
