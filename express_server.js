@@ -9,9 +9,9 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-app.get("/urls/:shortURL", (req, res) => {
+app.get("/urls/:shortURL", (req, res) => { //displays short urls
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
-  res.render("urls_show", templateVars);
+  res.render("urls_show", templateVars); //rendering info about a single url in URL Show
 });
 
 app.get("/urls", (req, res) => { //message at /urls
