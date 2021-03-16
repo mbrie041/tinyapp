@@ -17,10 +17,24 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const httpChecker = (url) => {
+  let givenLink = url.body.longURL; //take the url actual url given
+  // console.log(givenLink)
+  if (!givenLink.startsWith('http://') && (!givenLink.startsWith('https://'))) { //check to see if http(s) is included
+    return givenLink = 'http://'+ givenLink; //add it if it isn't
+  } else {
+    return givenLink; //return the link if it is.
+  }
+};
+
 app.post("/urls", (req, res) => {
   // const longUrl = req.body.longURL
   const newShortUrl = generateRandomString();   /// runs our function which will become the shortUrl
-  urlDatabase[newShortUrl] = req.body.longURL;
+  let newUrl = httpChecker(req);
+  // console.log(req.body.longURL)
+  // urlDatabase[newShortUrl] = req.body.longURL;
+
+  urlDatabase[newShortUrl] = newUrl;
   res.redirect(`/urls/${newShortUrl}`);         // Replaced ok with redirection to URL
 });
 
