@@ -15,6 +15,13 @@ const urlDatabase = { //website data hard coded in
   "9sm5xK": "http://www.google.com"
 };
 
+const userDatabase = {
+  //username: {
+    // email: email value
+    // password: password value
+    //}
+};
+
 //helper functions
 
 function generateRandomString() {
@@ -35,6 +42,11 @@ const httpChecker = (url) => {
 
 const updateURL = (givenShortUrl, givenLongUrl) => {
   urlDatabase[givenShortUrl] = givenLongUrl;// update the content of the url
+};
+
+const addNewUser = (email, password) => {
+  //take input values
+  //add them to a database 
 };
 
 //website functions
@@ -96,6 +108,13 @@ app.post('/urls/:shortURL/edit', (req, res) => { //change url to given url
 
   res.redirect(`/urls/${givenShortUrl}`); //redirects to the new url page upon completion
 });
+
+app.get('/register', (req,res) => { //route to the register page
+  const templateVars = {username: req.cookies["username"]}; 
+res.render("urls_register",templateVars)
+})
+
+// app.post('/register')
 
 
 
