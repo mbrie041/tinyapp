@@ -47,11 +47,12 @@ app.post("/urls", (req, res) => {
   // urlDatabase[newShortUrl] = req.body.longURL;
 
   urlDatabase[newShortUrl] = newUrl;
-  res.redirect(`/urls/${newShortUrl}`);         // Replaced ok with redirection to URL
+  res.redirect(`/urls/${newShortUrl}`);// Replaced ok with redirection to URL
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new"); //get route to render the urls_new.ejs
+  const templateVars = {username: req.cookies["username"]}; 
+  res.render("urls_new", templateVars); //get route to render the urls_new.ejs
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -60,8 +61,8 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => { //displays short urls
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
-  res.render("urls_show", templateVars); //rendering info about a single url in URL Show
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"]};
+  res.render("urls_show", templateVars); //get route to render info about a single url in URL Show
 });
 
 app.post("/login", (req, res) => { //login route that takes a username
@@ -69,8 +70,13 @@ app.post("/login", (req, res) => { //login route that takes a username
   res.redirect("/urls")
 });
 
+app.post("/logout", (req, res) => { //Logout route removes cookies of a username
+  res.clearCookie('username')
+  res.redirect("/urls")
+});
+
 app.get("/urls", (req, res) => { //message at /urls
-  const urlObject = { urls: urlDatabase };
+  const urlObject = { urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_index", urlObject); //displayed as a table in index
 });
 

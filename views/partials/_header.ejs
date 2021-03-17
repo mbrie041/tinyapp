@@ -7,15 +7,28 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
+      <div class="navbar-nav mr-auto">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
+
+      <%if (!username) {%>
         <!--added a login button-->
-      <form method="POST" action="/login">
-        <input type="text" name="username">
-        <button type="submit" class="btn btn-primary">Log in</button>
-      </form>
+        <form method="POST" action="/login">
+          <input type="text" name="username">
+          <button type="submit" class="btn btn-primary m-3"><b>Log in</button></b>
+        </form>
+
+        <%} else {%>
+          <!--added a Username and logout button-->
+          <b>
+            <%=`Logged in as: ${username}`%>
+          </b>
+          <form method="POST" action='/logout'>
+            <button type="submit" class="btn btn-danger m-3"> <b>Log Out</button></b>
+          </form>
+
+          <% } %>
     </div>
   </nav>
 </header>
