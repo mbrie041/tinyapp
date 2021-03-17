@@ -1,12 +1,13 @@
 //Global Vars
 
+const cookieParser = require('cookie-parser')
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
+app.use(cookieParser())
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true})); //body-parser library to read buffers
-
 app.set("view engine", "ejs") //reads EJS
 
 const urlDatabase = { //website data hard coded in
@@ -63,6 +64,11 @@ app.get("/urls/:shortURL", (req, res) => { //displays short urls
   res.render("urls_show", templateVars); //rendering info about a single url in URL Show
 });
 
+app.post("/login", (req, res) => { //login route that takes a username
+  res.cookie('username', req.body.username)
+  res.redirect("/urls")
+});
+
 app.get("/urls", (req, res) => { //message at /urls
   const urlObject = { urls: urlDatabase };
   res.render("urls_index", urlObject); //displayed as a table in index
@@ -77,13 +83,14 @@ app.post('/urls/:shortURL/edit', (req, res) => { //change url to given url
 
   const givenShortUrl= req.params.shortURL;
   const givenLongUrl = req.body.shortURL;
-  console.log("Longurl>>",givenLongUrl)
-  console.log("Shorturl>>",givenShortUrl)
+  // console.log("Longurl>>",givenLongUrl)
+  // console.log("Shorturl>>",givenShortUrl)
 
   updateURL(givenShortUrl, givenLongUrl);
 
   res.redirect(`/urls/${givenShortUrl}`); //redirects to the new url page upon completion
 });
+
 
 
 // app.get("/", (req, res) => { //message at root - provided (probably won't keep)
