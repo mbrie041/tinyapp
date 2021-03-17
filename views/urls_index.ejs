@@ -27,8 +27,7 @@
             <td><%= url %></td> 
             <td><%= urls[url] %>
               <td>
-                <form method="post" action="/urls/<%= url%>/edit">
-                  <input type="submit" class="btn btn-outline-info"></form> 
+                <a href="/urls/<%= url%>" class="btn btn-outline-info"> Edit</a>
               </td>
               <td> 
                 <form method="post" action="/urls/<%= url%>/delete"> <!--request to remove url-->

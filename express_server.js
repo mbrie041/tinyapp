@@ -15,11 +15,17 @@ const urlDatabase = { //website data hard coded in
   "9sm5xK": "http://www.google.com"
 };
 
-const userDatabase = {
-  //username: {
-    // email: email value
-    // password: password value
-    //}
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
 };
 
 //helper functions
@@ -30,8 +36,8 @@ function generateRandomString() {
 };
 
 
-const httpChecker = (url) => {
-  let givenLink = url.body.longURL; //take the url actual url given
+const httpChecker = (givenLink) => {
+  // let givenLink = url.body.longURL; //take the url actual url given
   // console.log(givenLink)
   if (!givenLink.startsWith('http://') && (!givenLink.startsWith('https://'))) { //check to see if http(s) is included
     return givenLink = 'http://'+ givenLink; //add it if it isn't
@@ -41,29 +47,55 @@ const httpChecker = (url) => {
 };
 
 const updateURL = (givenShortUrl, givenLongUrl) => {
-  urlDatabase[givenShortUrl] = givenLongUrl;// update the content of the url
+  urlDatabase[givenShortUrl] = httpChecker(givenLongUrl);// update the content of the url
 };
 
-const addNewUser = (email, password) => {
-  //take input values
-  //add them to a database 
+const addNewUser = (newID, userObject) => {
+  users[newID]= userObject
 };
+
+const findUserByEmail = (givenEmail) => {
+  // loop and try to match the email
+  for (let userId in users) {
+    const userObj = users[userId];
+    if (userObj.email === givenEmail) {
+      // if found return the user
+      return userObj;
+    }
+  }
+  // if not found return false
+  return false;
+};
+
+// const authenticateUser = (givenEmail, givenPassword) => {
+//   const userFound = findUserByEmail(givenEmail);
+//   if (userFound) {
+//     // user already exists
+//     return 'error400';
+//   }
+//   if (givenEmail === "" || givenPassword === "") {
+//     // one of the values is empty
+//     return 'error400'
+//   }
+//   return;
+// };
 
 //website functions
 
 app.post("/urls", (req, res) => {
-  // const longUrl = req.body.longURL
+  const longUrl = req.body.longURL
   const newShortUrl = generateRandomString();   /// runs our function which will become the shortUrl
-  let newUrl = httpChecker(req);
+  // let newUrl = httpChecker(req);
   // console.log(req.body.longURL)
   // urlDatabase[newShortUrl] = req.body.longURL;
 
-  urlDatabase[newShortUrl] = newUrl;
+  // urlDatabase[newShortUrl] = newUrl;
+  updateURL(newShortUrl,longUrl); //updated to include update URL function to cut down code
   res.redirect(`/urls/${newShortUrl}`);// Replaced ok with redirection to URL
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {username: req.cookies["username"]}; 
+  const templateVars = {user: users[req.cookies["user_ID"]]}; 
   res.render("urls_new", templateVars); //get route to render the urls_new.ejs
 });
 
@@ -73,7 +105,7 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => { //displays short urls
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"]};
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_ID"]]};
   res.render("urls_show", templateVars); //get route to render info about a single url in URL Show
 });
 
@@ -88,7 +120,7 @@ app.post("/logout", (req, res) => { //Logout route removes cookies of a username
 });
 
 app.get("/urls", (req, res) => { //message at /urls
-  const urlObject = { urls: urlDatabase, username: req.cookies["username"] };
+  const urlObject = { urls: urlDatabase, user: users[req.cookies["user_ID"]] };
   res.render("urls_index", urlObject); //displayed as a table in index
 });
 
@@ -110,11 +142,27 @@ app.post('/urls/:shortURL/edit', (req, res) => { //change url to given url
 });
 
 app.get('/register', (req,res) => { //route to the register page
-  const templateVars = {username: req.cookies["username"]}; 
+  const templateVars = {user: users[req.cookies["user_ID"]]}; 
+  // console.log(templateVars)
 res.render("urls_register",templateVars)
 })
 
-// app.post('/register')
+app.post('/register', (req,res) => { //adding new registrationg data to cookies
+  let userID = generateRandomString();
+  const {email, password} = req.body;
+  //check to if user email is an emptry string
+  //check to if user exists in the database
+  if (!email || !password || findUserByEmail(email)) {
+        // one of the values is empty
+       res.sendStatus(400)
+       return;
+  };
+  //if checks pass, add the new user
+  addNewUser(userID, {userID,email,password})
+  // console.log(users)
+  res.cookie("user_ID",userID);
+  res.redirect('/urls')
+})
 
 
 
