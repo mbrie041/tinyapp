@@ -2,6 +2,7 @@
 //////Global Vars//////
 //////////////////////
 
+const bcrypt = require('bcrypt');
 const cookieParser = require('cookie-parser');
 const express = require("express");
 const app = express();
@@ -97,7 +98,6 @@ const urlsForUser = (id) => { //creates an obj that includes all the shorturls f
 app.get("/urls", (req, res) => { //takes you to the main index 
   const iteratedObject = urlsForUser(req.cookies["user_ID"])//iterates through the database and returns only values for that user 
   const templateVars = { urls: iteratedObject, user: users[req.cookies["user_ID"]] };
-  // console.log("template vars 81>>>:",templateVars)
   res.render("urls_index", templateVars);
 });
 
@@ -105,10 +105,8 @@ app.get("/urls", (req, res) => { //takes you to the main index
 
 app.post("/urls", (req, res) => { //adds new url to database and displays it on the index
   const longURL = req.body.longURL;
-  // console.log(req.body.longURL)
   const newShortUrl = generateRandomString();   /// runs our function which will become the shortUrl
   updateURL(newShortUrl, longURL, req.cookies["user_ID"]); //updated to include update URL function to cut down code
-  console.log("database of urls>>>", urlDatabase)
   res.redirect(`/urls/${newShortUrl}`);// Replaced ok with redirection to URL
 });
 
@@ -149,11 +147,12 @@ app.get('/register', (req, res) => { //route to the register page
 app.post('/register', (req, res) => { //adding new registration to database and cookies
   let userID = generateRandomString();
   const { email, password } = req.body;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   if (!email || !password || findUserByEmail(email)) {  //check to if user email exists and exists in the database
     res.sendStatus(400); // error if any of the values are falsey
     return;
   }
-  addNewUser(userID, { userID, email, password }); //if passes checks, add the new user
+  addNewUser(userID, { userID, email, password: hashedPassword}); //if passes checks, add the new user
   res.cookie("user_ID", userID);
   res.redirect('/urls');
 });
@@ -167,7 +166,7 @@ app.get('/login', (req, res) => { //route to the login page
 
 app.post("/login", (req, res) => { // Log in function
   const userObj = findUserByEmail(req.body.email);
-  if (userObj && userObj.password === req.body.password) { //checks to see if user name & password exist/match
+  if (userObj && bcrypt.compareSync(req.body.password, userObj.password)) { //checks to see if user name & password exist/match
     res.cookie("user_ID", userObj.userID);
     res.redirect('/urls'); //if sign in works then redirect to URL Index page
   } else {
@@ -196,10 +195,9 @@ app.post("/urls/:shortURL/delete", (req, res) => { //request to remove url
 app.post('/urls/:shortURL/edit', (req, res) => { //change url to given url
   const currentUser = req.cookies["user_ID"]
   const userDbValue = urlDatabase[req.params.shortURL].userID;
-  if (userCompare(currentUser, userDbValue)) {
-
-    const givenShortUrl = req.params.shortURL;
-    const givenLongUrl = req.body.shortURL;
+  const givenShortUrl = req.params.shortURL;
+  const givenLongUrl = req.body.shortURL;
+  if (userCompare(currentUser, userDbValue)) { 
     updateURL(givenShortUrl, givenLongUrl);
     res.redirect(`/urls/${givenShortUrl}`); //redirects to the new url page upon completion
   } else {
