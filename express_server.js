@@ -10,19 +10,19 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true })); //body-parser library to read buffers
 app.set("view engine", "ejs") //reads EJS
 
-const urlDatabase = { //website data hard coded in
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+const urlDatabase = {
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
 const users = {
   "userRandomID": {
-    id: "userRandomID",
+    userID: "userRandomID",
     email: "user@example.com",
     password: "purple-monkey-dinosaur"
   },
   "user2RandomID": {
-    id: "user2RandomID",
+    userID: "user2RandomID",
     email: "user2@example.com",
     password: "dishwasher-funk"
   }
@@ -35,10 +35,7 @@ function generateRandomString() {
   return Math.random().toString(20).substr(2, randomShortUrl);  // function that returns a string of 6 random alphanumeric characters
 };
 
-
-const httpChecker = (givenLink) => {
-  // let givenLink = url.body.longURL; //take the url actual url given
-  // console.log(givenLink)
+const httpChecker = (givenLink) => { //adds on http if not previously included
   if (!givenLink.startsWith('http://') && (!givenLink.startsWith('https://'))) { //check to see if http(s) is included
     return givenLink = 'http://' + givenLink; //add it if it isn't
   } else {
@@ -46,15 +43,16 @@ const httpChecker = (givenLink) => {
   }
 };
 
-const updateURL = (givenShortUrl, givenLongUrl) => {
-  urlDatabase[givenShortUrl] = httpChecker(givenLongUrl);// update the content of the url
+const updateURL = (givenShortUrl, givenLongUrl, userID) => {// update the content of the url and adds on http
+
+  urlDatabase[givenShortUrl] = {longURL: httpChecker(givenLongUrl), userID};
 };
 
-const addNewUser = (newID, userObject) => {
+const addNewUser = (newID, userObject) => { //adds a new user to the database
   users[newID] = userObject
 };
 
-const findUserByEmail = (givenEmail) => {
+const findUserByEmail = (givenEmail) => { //checks to see if a user exists by their email
   // loop and try to match the email
   for (let userId in users) {
     const userObj = users[userId];
@@ -67,54 +65,46 @@ const findUserByEmail = (givenEmail) => {
   return false;
 };
 
-// const authenticateUser = (givenEmail, givenPassword) => {
-//   const userFound = findUserByEmail(givenEmail);
-//   if (userFound) {
-//     // user already exists
-//     return 'error400';
-//   }
-//   if (givenEmail === "" || givenPassword === "") {
-//     // one of the values is empty
-//     return 'error400'
-//   }
-//   return;
-// };
-
 //website functions
 
 app.post("/urls", (req, res) => { //adds new url to database
   const longUrl = req.body.longURL
   const newShortUrl = generateRandomString();   /// runs our function which will become the shortUrl
-  updateURL(newShortUrl, longUrl); //updated to include update URL function to cut down code
+  updateURL(newShortUrl, longUrl, req.cookies["user_ID"]); //updated to include update URL function to cut down code
   res.redirect(`/urls/${newShortUrl}`);// Replaced ok with redirection to URL
 });
 
-app.get("/urls/new", (req, res) => {
+app.get("/urls/new", (req, res) => { //routes to render the urls/new
+  if(req.cookies["user_ID"]){
+    
   const templateVars = { user: users[req.cookies["user_ID"]] };
-  res.render("urls_new", templateVars); //get route to render the urls_new.ejs
+  res.render("urls_new", templateVars); 
+  } else {
+    res.redirect("/login");
+
+  }
 });
 
-app.get("/u/:shortURL", (req, res) => {
+app.get("/u/:shortURL", (req, res) => {//requests to the endpoint "/u/:shortURL" will redirect to its longURL
   const longURL = urlDatabase[req.params.shortURL]
-  res.redirect(longURL); //requests to the endpoint "/u/:shortURL" will redirect to its longURL
+  res.redirect(longURL); 
 });
 
 app.get("/urls/:shortURL", (req, res) => { //displays short urls
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_ID"]] };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_ID"]]};
+
   res.render("urls_show", templateVars); //get route to render info about a single url in URL Show
 });
 
 app.get('/login', (req, res) => { //route to the login page
   const templateVars = { user: users[req.cookies["user_ID"]] }
-  console.log("@login users is >>", users)
   res.render("urls_login", templateVars)
 });
 
 app.post("/login", (req, res) => { //login route that takes a username
   const userObj = findUserByEmail(req.body.email);
-  console.log("users",users)
-  console.log("userObj>>>",userObj)
-  console.log("password>>> ",req.body.password)
+  console.log("req body PW",req.body.password)
+  console.log("userobj PW",userObj.password)
   if (userObj && userObj.password === req.body.password) {
     res.cookie("user_ID", userObj.userID);
     res.redirect('/urls');
@@ -125,13 +115,13 @@ app.post("/login", (req, res) => { //login route that takes a username
 
 app.post("/logout", (req, res) => { //Logout route removes cookies of a username
   res.clearCookie("user_ID")
-  console.log("@logout users is>>", users)
   res.redirect("/urls")
 });
 
 app.get("/urls", (req, res) => { //message at /urls
-  const urlObject = { urls: urlDatabase, user: users[req.cookies["user_ID"]] };
-  res.render("urls_index", urlObject); //displayed as a table in index
+  console.log("User cookies>>>",users[req.cookies["user_ID"]])
+  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_ID"]] };
+  res.render("urls_index", templateVars); //displayed as a table in index
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => { //request to remove url
@@ -153,7 +143,6 @@ app.post('/urls/:shortURL/edit', (req, res) => { //change url to given url
 
 app.get('/register', (req, res) => { //route to the register page
   const templateVars = { user: users[req.cookies["user_ID"]] };
-  // console.log(templateVars)
   res.render("urls_register", templateVars)
 })
 
@@ -169,22 +158,11 @@ app.post('/register', (req, res) => { //adding new registrationg data to cookies
   };
   //if checks pass, add the new user
   addNewUser(userID, { userID, email, password })
-  // console.log(users)
+
   res.cookie("user_ID", userID);
   res.redirect('/urls')
 })
 
-// app.get("/", (req, res) => { //message at root - provided (probably won't keep)
-//   res.send("Hello!");
-// });
-
-// app.get("/urls/:shortURL", (req, res) => { //message at URLS.JSON - provided (probably won't keep)
-//   res.json(urlDatabase);
-// });
-
-// app.get("/hello", (req, res) => { //message at /hello - provided (probably won't keep)
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
