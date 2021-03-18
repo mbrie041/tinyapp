@@ -14,17 +14,17 @@ app.set("view engine", "ejs");
 
 const urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aM5k7" }
 };
 
 const users = {
-  "userRandomID": {
-    userID: "userRandomID",
+  "aJ48lW": {
+    userID: "aJ48lW",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: "password"
   },
-  "user2RandomID": {
-    userID: "user2RandomID",
+  "aM5k7": {
+    userID: "aM5k7",
     email: "user2@example.com",
     password: "dishwasher-funk"
   },
@@ -78,6 +78,7 @@ const findUserByEmail = (givenEmail) => { //Checks to see if a user exists by th
 
 app.get("/urls", (req, res) => { //takes you to the main index page
   const templateVars = { urls: urlDatabase, user: users[req.cookies["user_ID"]] };
+  console.log("template vars 81>>>:",templateVars)
   res.render("urls_index", templateVars);
 });
 
@@ -88,6 +89,7 @@ app.post("/urls", (req, res) => { //adds new url to database and displays it on 
   // console.log(req.body.longURL)
   const newShortUrl = generateRandomString();   /// runs our function which will become the shortUrl
   updateURL(newShortUrl, longURL, req.cookies["user_ID"]); //updated to include update URL function to cut down code
+  console.log("database of urls>>>",urlDatabase)
   res.redirect(`/urls/${newShortUrl}`);// Replaced ok with redirection to URL
 });
 
