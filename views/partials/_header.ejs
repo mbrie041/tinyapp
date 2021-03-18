@@ -13,14 +13,15 @@
       </div>
 
       <%if (!user) {%>
-        <!--added a login button-->
-        <form method="POST" action="/login">
-          <input type="text" name="username">
+        <!--when not logged in shows login and register buttons-->
+        <form method="GET" action="/login">
           <button type="submit" class="btn btn-primary m-3"><b>Log in</button></b>
         </form>
-
+        <form method="Register" action="/register">
+          <button type="submit" class="btn btn-warning m-3"><b>Register</button></b>
+        </form>
         <%} else {%>
-          <!--added a Username and logout button-->
+          <!--When logged in shows Username and logout button-->
           <b>
             <%=`Logged in as: ${user.email}`%>
           </b>

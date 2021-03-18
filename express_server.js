@@ -7,7 +7,7 @@ const PORT = 8080; // default port 8080
 
 app.use(cookieParser())
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true})); //body-parser library to read buffers
+app.use(bodyParser.urlencoded({ extended: true })); //body-parser library to read buffers
 app.set("view engine", "ejs") //reads EJS
 
 const urlDatabase = { //website data hard coded in
@@ -15,15 +15,15 @@ const urlDatabase = { //website data hard coded in
   "9sm5xK": "http://www.google.com"
 };
 
-const users = { 
+const users = {
   "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
+    id: "userRandomID",
+    email: "user@example.com",
     password: "purple-monkey-dinosaur"
   },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
     password: "dishwasher-funk"
   }
 };
@@ -40,7 +40,7 @@ const httpChecker = (givenLink) => {
   // let givenLink = url.body.longURL; //take the url actual url given
   // console.log(givenLink)
   if (!givenLink.startsWith('http://') && (!givenLink.startsWith('https://'))) { //check to see if http(s) is included
-    return givenLink = 'http://'+ givenLink; //add it if it isn't
+    return givenLink = 'http://' + givenLink; //add it if it isn't
   } else {
     return givenLink; //return the link if it is.
   }
@@ -51,7 +51,7 @@ const updateURL = (givenShortUrl, givenLongUrl) => {
 };
 
 const addNewUser = (newID, userObject) => {
-  users[newID]= userObject
+  users[newID] = userObject
 };
 
 const findUserByEmail = (givenEmail) => {
@@ -82,20 +82,15 @@ const findUserByEmail = (givenEmail) => {
 
 //website functions
 
-app.post("/urls", (req, res) => {
+app.post("/urls", (req, res) => { //adds new url to database
   const longUrl = req.body.longURL
   const newShortUrl = generateRandomString();   /// runs our function which will become the shortUrl
-  // let newUrl = httpChecker(req);
-  // console.log(req.body.longURL)
-  // urlDatabase[newShortUrl] = req.body.longURL;
-
-  // urlDatabase[newShortUrl] = newUrl;
-  updateURL(newShortUrl,longUrl); //updated to include update URL function to cut down code
+  updateURL(newShortUrl, longUrl); //updated to include update URL function to cut down code
   res.redirect(`/urls/${newShortUrl}`);// Replaced ok with redirection to URL
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {user: users[req.cookies["user_ID"]]}; 
+  const templateVars = { user: users[req.cookies["user_ID"]] };
   res.render("urls_new", templateVars); //get route to render the urls_new.ejs
 });
 
@@ -105,17 +100,32 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => { //displays short urls
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_ID"]]};
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_ID"]] };
   res.render("urls_show", templateVars); //get route to render info about a single url in URL Show
 });
 
+app.get('/login', (req, res) => { //route to the login page
+  const templateVars = { user: users[req.cookies["user_ID"]] }
+  console.log("@login users is >>", users)
+  res.render("urls_login", templateVars)
+});
+
 app.post("/login", (req, res) => { //login route that takes a username
-  res.cookie('username', req.body.username)
-  res.redirect("/urls")
+  const userObj = findUserByEmail(req.body.email);
+  console.log("users",users)
+  console.log("userObj>>>",userObj)
+  console.log("password>>> ",req.body.password)
+  if (userObj && userObj.password === req.body.password) {
+    res.cookie("user_ID", userObj.userID);
+    res.redirect('/urls');
+  } else {
+    res.sendStatus(403);
+  }
 });
 
 app.post("/logout", (req, res) => { //Logout route removes cookies of a username
-  res.clearCookie('username')
+  res.clearCookie("user_ID")
+  console.log("@logout users is>>", users)
   res.redirect("/urls")
 });
 
@@ -124,14 +134,14 @@ app.get("/urls", (req, res) => { //message at /urls
   res.render("urls_index", urlObject); //displayed as a table in index
 });
 
-app.post("/urls/:shortURL/delete", (req,res) => { //request to remove url
+app.post("/urls/:shortURL/delete", (req, res) => { //request to remove url
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
 
 app.post('/urls/:shortURL/edit', (req, res) => { //change url to given url
 
-  const givenShortUrl= req.params.shortURL;
+  const givenShortUrl = req.params.shortURL;
   const givenLongUrl = req.body.shortURL;
   // console.log("Longurl>>",givenLongUrl)
   // console.log("Shorturl>>",givenShortUrl)
@@ -141,30 +151,28 @@ app.post('/urls/:shortURL/edit', (req, res) => { //change url to given url
   res.redirect(`/urls/${givenShortUrl}`); //redirects to the new url page upon completion
 });
 
-app.get('/register', (req,res) => { //route to the register page
-  const templateVars = {user: users[req.cookies["user_ID"]]}; 
+app.get('/register', (req, res) => { //route to the register page
+  const templateVars = { user: users[req.cookies["user_ID"]] };
   // console.log(templateVars)
-res.render("urls_register",templateVars)
+  res.render("urls_register", templateVars)
 })
 
-app.post('/register', (req,res) => { //adding new registrationg data to cookies
+app.post('/register', (req, res) => { //adding new registrationg data to cookies
   let userID = generateRandomString();
-  const {email, password} = req.body;
+  const { email, password } = req.body;
   //check to if user email is an emptry string
   //check to if user exists in the database
   if (!email || !password || findUserByEmail(email)) {
-        // one of the values is empty
-       res.sendStatus(400)
-       return;
+    // one of the values is empty
+    res.sendStatus(400)
+    return;
   };
   //if checks pass, add the new user
-  addNewUser(userID, {userID,email,password})
+  addNewUser(userID, { userID, email, password })
   // console.log(users)
-  res.cookie("user_ID",userID);
+  res.cookie("user_ID", userID);
   res.redirect('/urls')
 })
-
-
 
 // app.get("/", (req, res) => { //message at root - provided (probably won't keep)
 //   res.send("Hello!");
