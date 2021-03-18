@@ -9,6 +9,7 @@
 </head>
 <body>
   <%- include('partials/_header') %> <!--added a header partial-->
+  <% if (user) { %>
   <main style="margin: 1em;">
     <h3>My URLs</h3>
     <table class="table">
@@ -23,7 +24,6 @@
       </thead>
       <tbody>
         <% for(let url in urls) { %><!--iterating through URLS and displaying them in a table-->
-          <% if (user && user.userID === urls[url].userID) { %>
           <tr>
             <td><%= url %></td> 
             <td><%= urls[url].longURL %>
@@ -35,8 +35,15 @@
                   <input type="submit" value="Delete" class="btn btn-outline-danger" ></form> <!--giving delete button danger outline-->
               </td>
           </tr>
-          <% } %>
+            
         <% } %>
+        <% } else {%>
+          <main style="margin: 1em;">
+            <h3>Please Login</h3>
+            <table class="table">
+
+              <tbody>
+          <% } %>
 
       </tbody>
     </table>

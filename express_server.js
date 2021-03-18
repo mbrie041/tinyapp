@@ -14,6 +14,7 @@ app.set("view engine", "ejs");
 
 const urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  sgq3y6: { longURL: "https://www.reddit.com", userID: "aJ48lW" },
   i3BoGr: { longURL: "https://www.google.ca", userID: "aM5k7" }
 };
 
@@ -53,7 +54,7 @@ const httpChecker = (givenLink) => { //Adds on http if not previously included
 };
 
 const updateURL = (givenShortUrl, givenLongUrl, userID) => { //Adds or updates the content of the url
-  urlDatabase[givenShortUrl] = {longURL: httpChecker(givenLongUrl), userID};
+  urlDatabase[givenShortUrl] = { longURL: httpChecker(givenLongUrl), userID };
 };
 
 const addNewUser = (newID, userObject) => { //Adds a new user to the database
@@ -69,16 +70,34 @@ const findUserByEmail = (givenEmail) => { //Checks to see if a user exists by th
   }
   return false; //If not found return false
 };
-///test change
+
+const userCompare = (currentUser, userDbValue) => { //checks to see if the current user matches the users value in the database
+  if (currentUser === userDbValue) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+const urlsForUser = (id) => { //creates an obj that includes all the shorturls for a user
+  const newObj = {};
+  for (shortUrls in urlDatabase) {
+    if (id === urlDatabase[shortUrls].userID) {
+      newObj[shortUrls] = urlDatabase[shortUrls]
+    }
+  } return newObj;
+};
+
 //////////////////////////////
 //////Website Functions//////
 ////////////////////////////
 
 //// Accessing URL index page
 
-app.get("/urls", (req, res) => { //takes you to the main index page
-  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_ID"]] };
-  console.log("template vars 81>>>:",templateVars)
+app.get("/urls", (req, res) => { //takes you to the main index 
+  const iteratedObject = urlsForUser(req.cookies["user_ID"])//iterates through the database and returns only values for that user 
+  const templateVars = { urls: iteratedObject, user: users[req.cookies["user_ID"]] };
+  // console.log("template vars 81>>>:",templateVars)
   res.render("urls_index", templateVars);
 });
 
@@ -89,7 +108,7 @@ app.post("/urls", (req, res) => { //adds new url to database and displays it on 
   // console.log(req.body.longURL)
   const newShortUrl = generateRandomString();   /// runs our function which will become the shortUrl
   updateURL(newShortUrl, longURL, req.cookies["user_ID"]); //updated to include update URL function to cut down code
-  console.log("database of urls>>>",urlDatabase)
+  console.log("database of urls>>>", urlDatabase)
   res.redirect(`/urls/${newShortUrl}`);// Replaced ok with redirection to URL
 });
 
@@ -110,9 +129,14 @@ app.get("/u/:shortURL", (req, res) => { //"/u/:shortURL" will redirect to its ma
 });
 
 app.get("/urls/:shortURL", (req, res) => { //displays short urls
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.cookies["user_ID"]]};
-
-  res.render("urls_show", templateVars); //get route to render info about a single url in URL Show
+  const currentUser = req.cookies["user_ID"];
+  const userDbValue = urlDatabase[req.params.shortURL].userID;
+  if (userCompare(currentUser, userDbValue)) {
+    const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.cookies["user_ID"]] };
+    res.render("urls_show", templateVars); //get route to render info about a single url in URL Show
+  } else {
+    res.sendStatus(403);
+  }
 });
 
 //// Registering
@@ -159,15 +183,29 @@ app.post("/logout", (req, res) => { //Logout route removes cookies of a username
 //// Editting and Deleting URLs
 
 app.post("/urls/:shortURL/delete", (req, res) => { //request to remove url
-  delete urlDatabase[req.params.shortURL];
-  res.redirect("/urls"); //redirects to URL index page
+  const currentUser = req.cookies["user_ID"]
+  const userDbValue = urlDatabase[req.params.shortURL].userID;
+  if (userCompare(currentUser, userDbValue)) {
+    delete urlDatabase[req.params.shortURL];
+    res.redirect("/urls"); //redirects to URL index page
+  } else {
+    res.sendStatus(403);
+  }
 });
 
 app.post('/urls/:shortURL/edit', (req, res) => { //change url to given url
-  const givenShortUrl = req.params.shortURL;
-  const givenLongUrl = req.body.shortURL;
-  updateURL(givenShortUrl, givenLongUrl);
-  res.redirect(`/urls/${givenShortUrl}`); //redirects to the new url page upon completion
+  const currentUser = req.cookies["user_ID"]
+  const userDbValue = urlDatabase[req.params.shortURL].userID;
+  if (userCompare(currentUser, userDbValue)) {
+
+    const givenShortUrl = req.params.shortURL;
+    const givenLongUrl = req.body.shortURL;
+    updateURL(givenShortUrl, givenLongUrl);
+    res.redirect(`/urls/${givenShortUrl}`); //redirects to the new url page upon completion
+  } else {
+    res.sendStatus(403);
+  }
+
 });
 
 //// Dev tools
