@@ -68,14 +68,6 @@ const urlsForUser = (id) => { //creates an obj that includes all the shorturls f
   } return newObj;
 };
 
-const userCompare = (currentUser, userDbValue) => { //checks to see if the current user matches the users value in the database
-  if (currentUser === userDbValue) {
-    return true;
-  } else {
-    return false;
-  }
-};
-
 //////////////////////////////
 //////Website Functions//////
 ////////////////////////////
@@ -184,7 +176,7 @@ app.post('/urls/:shortURL/edit', (req, res) => { //change url to given url
   const userDbValue = urlDatabase[req.params.shortURL].userID;
   const givenShortUrl = req.params.shortURL;
   const givenLongUrl = req.body.shortURL;
-  if (userCompare(currentUser, userDbValue)) {
+  if (helper.userCompare(currentUser, userDbValue)) {
     updateURL(givenShortUrl, givenLongUrl, req.session.user_id);
     res.redirect(`/urls/${givenShortUrl}`); //redirects to the new url page upon completion
   } else {
