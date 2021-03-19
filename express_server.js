@@ -14,7 +14,7 @@ app.use(cookieSession({
   name: 'session',
   keys: ['password'],
   maxAge: 24 * 60 * 60 * 1000
-}))
+}));
 
 const bodyParser = require("body-parser");
 const { use } = require('bcrypt/lib/promises');
@@ -51,27 +51,22 @@ const users = {
 //////Helper Functions//////
 ///////////////////////////
 
-// const generateRandomString = () => { //Function that returns a string of 6 random alphanumeric characters
-//   let randomShortUrl = 6;
-//   return Math.random().toString(20).substr(2, randomShortUrl);
-// };
-
-const httpChecker = (givenLink) => { //Adds on http if not previously included
-  if (!givenLink.startsWith('http://') && (!givenLink.startsWith('https://'))) { //check to see if http(s) is included
-    return givenLink = 'http://' + givenLink; //add it if it isn't
-  } else {
-    return givenLink; //return the link if it is.
-  }
-};
-
 const updateURL = (givenShortUrl, givenLongUrl, userID) => { //Adds or updates the content of the url
-  urlDatabase[givenShortUrl] = { longURL: httpChecker(givenLongUrl), userID };
+  urlDatabase[givenShortUrl] = { longURL: helper.httpChecker(givenLongUrl), userID };
 };
 
 const addNewUser = (newID, userObject) => { //Adds a new user to the database
   users[newID] = userObject;
 };
 
+const urlsForUser = (id) => { //creates an obj that includes all the shorturls for a user
+  const newObj = {};
+  for (let shortUrls in urlDatabase) {
+    if (id === urlDatabase[shortUrls].userID) {
+      newObj[shortUrls] = urlDatabase[shortUrls];
+    }
+  } return newObj;
+};
 
 const userCompare = (currentUser, userDbValue) => { //checks to see if the current user matches the users value in the database
   if (currentUser === userDbValue) {
@@ -81,24 +76,15 @@ const userCompare = (currentUser, userDbValue) => { //checks to see if the curre
   }
 };
 
-const urlsForUser = (id) => { //creates an obj that includes all the shorturls for a user
-  const newObj = {};
-  for (shortUrls in urlDatabase) {
-    if (id === urlDatabase[shortUrls].userID) {
-      newObj[shortUrls] = urlDatabase[shortUrls]
-    }
-  } return newObj;
-};
-
 //////////////////////////////
 //////Website Functions//////
 ////////////////////////////
 
 //// Accessing URL index page
 
-app.get("/urls", (req, res) => { //takes you to the main index 
-  const iteratedObject = urlsForUser(req.session.user_id)//iterates through the database and returns only values for that user 
-  const templateVars = { urls: iteratedObject, user: users[req.session.user_id]};
+app.get("/urls", (req, res) => { //takes you to the main index
+  const iteratedObject = urlsForUser(req.session.user_id); //iterates through the database and returns only values for that user
+  const templateVars = { urls: iteratedObject, user: users[req.session.user_id] };
   res.render("urls_index", templateVars);
 });
 
@@ -113,7 +99,7 @@ app.post("/urls", (req, res) => { //adds new url to database and displays it on 
 
 app.get("/urls/new", (req, res) => { //redirects to add new Url page
   if (req.session.user_id) { //if logged in
-    const templateVars = { user: users[req.session.user_id]};
+    const templateVars = { user: users[req.session.user_id] };
     res.render("urls_new", templateVars);
   } else {
     res.redirect("/login");//if not logged in, redirects to log in page.
@@ -130,8 +116,8 @@ app.get("/u/:shortURL", (req, res) => { //"/u/:shortURL" will redirect to its ma
 app.get("/urls/:shortURL", (req, res) => { //displays short urls
   const currentUser = req.session.user_id;
   const userDbValue = urlDatabase[req.params.shortURL].userID;
-  if (userCompare(currentUser, userDbValue)) {
-    const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.session.user_id]};
+  if (helper.userCompare(currentUser, userDbValue)) {
+    const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.session.user_id] };
     res.render("urls_show", templateVars); //get route to render info about a single url in URL Show
   } else {
     res.sendStatus(403);
@@ -141,7 +127,7 @@ app.get("/urls/:shortURL", (req, res) => { //displays short urls
 //// Registering
 
 app.get('/register', (req, res) => { //route to the register page
-  const templateVars = { user: users[req.session.user_id]};
+  const templateVars = { user: users[req.session.user_id] };
   res.render("urls_register", templateVars);
 });
 
@@ -149,11 +135,11 @@ app.post('/register', (req, res) => { //adding new registration to database and 
   let userID = helper.generateRandomString();
   const { email, password } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
-  if (!email || !password || helper.findUserByEmail(email,users)) {  //check to if user email exists and exists in the database
+  if (!email || !password || helper.findUserByEmail(email, users)) {  //check to if user email exists and exists in the database
     res.sendStatus(400); // error if any of the values are falsey
     return;
   }
-  addNewUser(userID, { userID, email, password: hashedPassword}); //if passes checks, add the new user
+  addNewUser(userID, { userID, email, password: hashedPassword }); //if passes checks, add the new user
   req.session.user_id = (userID);
   res.redirect('/urls');
 });
@@ -161,7 +147,7 @@ app.post('/register', (req, res) => { //adding new registration to database and 
 //// Logging in and logging out
 
 app.get('/login', (req, res) => { //route to the login page
-  const templateVars = { user: users[req.session.user_id]};
+  const templateVars = { user: users[req.session.user_id] };
   res.render("urls_login", templateVars);
 });
 
@@ -185,7 +171,7 @@ app.post("/logout", (req, res) => { //Logout route removes cookies of a username
 app.post("/urls/:shortURL/delete", (req, res) => { //request to remove url
   const currentUser = req.session.user_id;
   const userDbValue = urlDatabase[req.params.shortURL].userID;
-  if (userCompare(currentUser, userDbValue)) {
+  if (helper.userCompare(currentUser, userDbValue)) {
     delete urlDatabase[req.params.shortURL];
     res.redirect("/urls"); //redirects to URL index page
   } else {
@@ -198,8 +184,8 @@ app.post('/urls/:shortURL/edit', (req, res) => { //change url to given url
   const userDbValue = urlDatabase[req.params.shortURL].userID;
   const givenShortUrl = req.params.shortURL;
   const givenLongUrl = req.body.shortURL;
-  if (userCompare(currentUser, userDbValue)) { 
-    updateURL(givenShortUrl, givenLongUrl);
+  if (userCompare(currentUser, userDbValue)) {
+    updateURL(givenShortUrl, givenLongUrl, req.session.user_id);
     res.redirect(`/urls/${givenShortUrl}`); //redirects to the new url page upon completion
   } else {
     res.sendStatus(403);
