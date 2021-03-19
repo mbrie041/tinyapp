@@ -3,11 +3,11 @@
 //////////////////////
 
 const bcrypt = require('bcrypt');
-// const cookieParser = require('cookie-parser');
 const express = require("express");
 const app = express();
 const PORT = 8080;
-const cookieSession = require('cookie-session')
+const cookieSession = require('cookie-session');
+const helper = require('./helper');
 
 
 app.use(cookieSession({
@@ -16,8 +16,9 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000
 }))
 
-// app.use(cookieParser());
 const bodyParser = require("body-parser");
+const { use } = require('bcrypt/lib/promises');
+const { request } = require('express');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
@@ -50,10 +51,10 @@ const users = {
 //////Helper Functions//////
 ///////////////////////////
 
-const generateRandomString = () => { //Function that returns a string of 6 random alphanumeric characters
-  let randomShortUrl = 6;
-  return Math.random().toString(20).substr(2, randomShortUrl);
-};
+// const generateRandomString = () => { //Function that returns a string of 6 random alphanumeric characters
+//   let randomShortUrl = 6;
+//   return Math.random().toString(20).substr(2, randomShortUrl);
+// };
 
 const httpChecker = (givenLink) => { //Adds on http if not previously included
   if (!givenLink.startsWith('http://') && (!givenLink.startsWith('https://'))) { //check to see if http(s) is included
@@ -71,15 +72,6 @@ const addNewUser = (newID, userObject) => { //Adds a new user to the database
   users[newID] = userObject;
 };
 
-const findUserByEmail = (givenEmail) => { //Checks to see if a user exists by their email
-  for (let userId in users) { //If found return the user
-    const userObj = users[userId];
-    if (userObj.email === givenEmail) {
-      return userObj; //If found return the user
-    }
-  }
-  return false; //If not found return false
-};
 
 const userCompare = (currentUser, userDbValue) => { //checks to see if the current user matches the users value in the database
   if (currentUser === userDbValue) {
@@ -114,7 +106,7 @@ app.get("/urls", (req, res) => { //takes you to the main index
 
 app.post("/urls", (req, res) => { //adds new url to database and displays it on the index
   const longURL = req.body.longURL;
-  const newShortUrl = generateRandomString();   /// runs our function which will become the shortUrl
+  const newShortUrl = helper.generateRandomString();   /// runs our function which will become the shortUrl
   updateURL(newShortUrl, longURL, req.session.user_id); //updated to include update URL function to cut down code
   res.redirect(`/urls/${newShortUrl}`);// Replaced ok with redirection to URL
 });
@@ -154,10 +146,10 @@ app.get('/register', (req, res) => { //route to the register page
 });
 
 app.post('/register', (req, res) => { //adding new registration to database and cookies
-  let userID = generateRandomString();
+  let userID = helper.generateRandomString();
   const { email, password } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
-  if (!email || !password || findUserByEmail(email)) {  //check to if user email exists and exists in the database
+  if (!email || !password || helper.findUserByEmail(email,users)) {  //check to if user email exists and exists in the database
     res.sendStatus(400); // error if any of the values are falsey
     return;
   }
@@ -174,7 +166,7 @@ app.get('/login', (req, res) => { //route to the login page
 });
 
 app.post("/login", (req, res) => { // Log in function
-  const userObj = findUserByEmail(req.body.email);
+  const userObj = helper.findUserByEmail(req.body.email, users);
   if (userObj && bcrypt.compareSync(req.body.password, userObj.password)) { //checks to see if user name & password exist/match
     req.session.user_id = userObj.userID;
     res.redirect('/urls'); //if sign in works then redirect to URL Index page

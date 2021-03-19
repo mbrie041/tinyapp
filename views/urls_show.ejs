@@ -9,19 +9,15 @@
 
 <body>
   <%- include('partials/_header') %>
-    <!--added a header partial-->
     <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
         <h5 class="card-title">TinyURL for: <%= longURL %>
         </h5>
-        <!--displays the long name-->
         <p class="card-text">Short URL: <a href="/u/<%= shortURL%>">
             <%= shortURL%>
-              <!--displays the short name-->
           </a></p>
 
-            <!--displays the editor in the footer-->
         <div class="card-footer text-muted">
           <h1>Edit URL</h1>
           <form method="POST" action="/urls/<%= shortURL%>/edit" class="form-group" style="display: flex">
@@ -31,7 +27,6 @@
         </div>
       </div>
 
-      <!-- Bootstrap JS -->
       <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
         integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
         crossorigin="anonymous"></script>
